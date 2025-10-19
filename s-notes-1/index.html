@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spanish Flashcards</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .card-stack {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            transition: transform 0.5s, opacity 0.5s;
+            cursor: pointer;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .card-front {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard.flipped .card-back {
+            transform: rotateY(0deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            backface-visibility: hidden;
+            transition: transform 0.6s;
+            border-radius: 20px;
+        }
+
+        .card-front {
+            background: linear-gradient(135deg, #3498db, #8e44ad);
+            color: white;
+            transform: rotateY(0deg);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, #2ecc71, #3498db);
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+         .spanish {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .english {
+            font-size: 1.8rem;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .category {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.8rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .know-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+
+        .dont-know-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .flip-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .speak-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .deck-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .deck-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .deck-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #3498db);
+            border-radius: 5px;
+            transition: width 0.5s;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .instructions p {
+            color: #34495e;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .swipe-hint {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            font-style: italic;
+            opacity: 0.8;
+        }
+
+        .voice-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .voice-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .voice-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 600px) {
+            .spanish {
+                font-size: 2rem;
+            }
+
+            .english {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                gap: 15px;
+            }
+
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .voice-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .flashcard {
+                padding: 20px;
+            }
+            
+            .spanish {
+                font-size: 2rem;
+            }
+            
+            .english {
+                font-size: 1.5rem;
+            }
+            
+            .controls {
+                gap: 20px;
+            }
+            
+            .control-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+        }
+
+       
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Spanish Flashcards</h1>
+            <p class="subtitle">Swipe right if you know it, left if you don't</p>
+        </header>
+
+        <div class="deck-selector">
+            <button class="deck-btn active" data-deck="greetings">Greetings & Colors</button>
+            <button class="deck-btn" data-deck="verbs">Verb Conjugations</button>
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <div class="stats">
+            <span>Cards Left: <span id="cards-left">0</span></span>
+            <span>Known: <span id="known-count">0</span></span>
+        </div>
+
+        <div class="card-stack" id="card-stack"></div>
+
+        <div class="controls">
+            <button class="control-btn dont-know-btn" id="dont-know-btn" title="Don't know">
+                <i class="fas fa-times"></i>
+            </button>
+            <button class="control-btn flip-btn" id="flip-btn" title="Flip">
+                <i class="fas fa-redo"></i>
+            </button>
+            <button class="control-btn speak-btn" id="speak-btn" title="Speak">
+                <i class="fas fa-volume-up"></i>
+            </button>
+            <button class="control-btn reset-btn" id="reset-btn" title="Reset">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="control-btn know-btn" id="know-btn" title="Know it">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+
+        <div class="voice-controls">
+            <button class="voice-btn active" data-voice="es">Spanish Voice</button>
+            <button class="voice-btn" data-voice="en">English Voice</button>
+        </div>
+
+        <p class="swipe-hint">You can also swipe cards with your mouse or finger</p>
+
+        <div class="instructions">
+            <h3>How to Use</h3>
+            <p><strong>Flip:</strong> Click the blue button or tap the card to see the translation</p>
+            <p><strong>Speak:</strong> Click the purple button to hear the Spanish pronunciation</p>
+            <p><strong>Know it:</strong> Click the green button or swipe right if you know the answer</p>
+            <p><strong>Don't know:</strong> Click the red button or swipe left to review the card again later</p>
+            <p><strong>Reset:</strong> Click the orange button to move cards you don't know to the top</p>
+            <p>Switch between the two flashcard decks using the buttons above</p>
+        </div>
+    </div>
+
+    <script>
+        const flashcardDecks = {
+            greetings: [
+                { spanish: "Hola", english: "Hello" },
+                { spanish: "Adiós", english: "Goodbye" },
+                { spanish: "Buenos días", english: "Good morning" },
+                { spanish: "Buenas tardes", english: "Good afternoon" },
+                { spanish: "Buenas noches", english: "Good night" },
+                { spanish: "Por favor", english: "Please" },
+                { spanish: "Gracias", english: "Thank you" },
+                { spanish: "De nada", english: "You're welcome" },
+                { spanish: "Rojo", english: "Red" },
+                { spanish: "Azul", english: "Blue" },
+                { spanish: "Verde", english: "Green" },
+                { spanish: "Amarillo", english: "Yellow" },
+                { spanish: "Blanco", english: "White" },
+                { spanish: "Negro", english: "Black" }
+            ],
+            verbs: [
+                { spanish: "Yo soy", english: "I am" },
+                { spanish: "Tú eres", english: "You are (informal)" },
+                { spanish: "Él es", english: "He is" },
+                { spanish: "Ella es", english: "She is" },
+                { spanish: "Usted es", english: "You are (formal)" },
+                { spanish: "Yo tengo", english: "I have" },
+                { spanish: "Tú tienes", english: "You have (informal)" },
+                { spanish: "Él tiene", english: "He has" },
+                { spanish: "Ella tiene", english: "She has" },
+                { spanish: "Usted tiene", english: "You have (formal)" },
+                { spanish: "Yo quiero", english: "I want" },
+                { spanish: "Tú quieres", english: "You want (informal)" },
+                { spanish: "Él quiere", english: "He wants" },
+                { spanish: "Ella quiere", english: "She wants" },
+                { spanish: "Usted quiere", english: "You want (formal)" },
+                { spanish: "Yo necesito", english: "I need" },
+                { spanish: "Tú necesitas", english: "You need (informal)" },
+                { spanish: "Él necesita", english: "He needs" },
+                { spanish: "Ella necesita", english: "She needs" },
+                { spanish: "Usted necesita", english: "You need (formal)" },
+                { spanish: "Yo hago", english: "I do/make" },
+                { spanish: "Tú haces", english: "You do/make (informal)" },
+                { spanish: "Él hace", english: "He does/makes" },
+                { spanish: "Ella hace", english: "She does/makes" },
+                { spanish: "Usted hace", english: "You do/make (formal)" },
+                { spanish: "Yo bebo", english: "I drink" },
+                { spanish: "Tú bebes", english: "You drink (informal)" },
+                { spanish: "Él bebe", english: "He drinks" },
+                { spanish: "Ella bebe", english: "She drinks" },
+                { spanish: "Usted bebe", english: "You drink (formal)" }
+            ]
+        };
+
+        let currentDeck = 'greetings';
+        let cards = [];
+        let currentCardIndex = 0;
+        let knownCards = 0;
+        let currentVoice = 'es';
+        let dontKnowCards = [];
+
+        const cardStack = document.getElementById('card-stack');
+        const progressBar = document.getElementById('progress-bar');
+        const cardsLeftElement = document.getElementById('cards-left');
+        const knownCountElement = document.getElementById('known-count');
+        const flipBtn = document.getElementById('flip-btn');
+        const knowBtn = document.getElementById('know-btn');
+        const dontKnowBtn = document.getElementById('dont-know-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const speakBtn = document.getElementById('speak-btn');
+        const deckButtons = document.querySelectorAll('.deck-btn');
+        const voiceButtons = document.querySelectorAll('.voice-btn');
+
+        function init() {
+            loadDeck(currentDeck);
+            updateProgress();
+            setupEventListeners();
+        }
+
+        function loadDeck(deckName) {
+            currentDeck = deckName;
+            cards = [...flashcardDecks[deckName]];
+            dontKnowCards = [];
+            currentCardIndex = 0;
+            knownCards = 0;
+            renderCards();
+            updateProgress();
+        }
+
+        function renderCards() {
+            cardStack.innerHTML = '';
+
+            if (cards.length === 0) {
+                cardStack.innerHTML = `
+                    <div class="flashcard">
+                        <div class="card-face card-front">
+                            <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
+                            <div class="spanish">¡Felicidades!</div>
+                            <div class="english">You've completed all cards!</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            for (let i = 0; i < Math.min(3, cards.length); i++) {
+                const cardIndex = (currentCardIndex + i) % cards.length;
+                const card = cards[cardIndex];
+
+                const cardElement = document.createElement('div');
+                cardElement.className = 'flashcard';
+                cardElement.style.zIndex = 3 - i;
+                cardElement.style.transform = `translateY(${i * 5}px)`;
+
+                cardElement.innerHTML = `
+                    <div class="card-face card-front">
+                        <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
+                        <div class="spanish">${card.spanish}</div>
+                        <div class="english">Tap to flip</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
+                        <div class="english">${card.english}</div>
+                        <div class="spanish">${card.spanish}</div>
+                    </div>
+                `;
+
+                if (i === 0) {
+                    cardElement.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        flipCard();
+                    });
+                }
+
+                cardStack.appendChild(cardElement);
+            }
+        }
+
+        function flipCard() {
+            const currentCard = cardStack.children[0];
+            if (currentCard) {
+                currentCard.classList.toggle('flipped');
+            }
+        }
+
+        function speakCard() {
+            if (cards.length === 0) return;
+
+            const currentCard = cards[currentCardIndex];
+            const textToSpeak = currentCard.spanish;
+
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = currentVoice === 'es' ? 'es-ES' : 'en-US';
+
+                const voices = speechSynthesis.getVoices();
+                const preferredVoice = voices.find(voice =>
+                    voice.lang.startsWith(currentVoice)
+                );
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+
+                speechSynthesis.speak(utterance);
+
+                speakBtn.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    speakBtn.style.transform = 'scale(1)';
+                }, 200);
+            } else {
+                alert('Text-to-speech is not supported in your browser.');
+            }
+        }
+
+        function knowCard() {
+            if (cards.length === 0) return;
+
+            knownCards++;
+            cards.splice(currentCardIndex, 1);
+
+            if (currentCardIndex >= cards.length) {
+                currentCardIndex = 0;
+            }
+
+            renderCards();
+            updateProgress();
+
+            knowBtn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                knowBtn.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        function dontKnowCard() {
+            if (cards.length === 0) return;
+
+            const card = cards.splice(currentCardIndex, 1)[0];
+            dontKnowCards.push(card);
+
+            renderCards();
+            updateProgress();
+
+            dontKnowBtn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                dontKnowBtn.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+       function resetCards() {
+    // Reset to the original deck and clear all tracking
+    cards = [...flashcardDecks[currentDeck]];
+    dontKnowCards = [];
+    currentCardIndex = 0;
+    knownCards = 0;
+    renderCards();
+    updateProgress();
+    resetBtn.style.transform = 'scale(1.2)';
+    setTimeout(() => {
+        resetBtn.style.transform = 'scale(1)';
+    }, 200);
+}
+
+
+        function updateProgress() {
+            const totalCards = flashcardDecks[currentDeck].length;
+            const remainingCards = cards.length;
+            const progress = ((totalCards - remainingCards) / totalCards) * 100;
+
+            progressBar.style.width = `${progress}%`;
+            cardsLeftElement.textContent = remainingCards;
+            knownCountElement.textContent = knownCards;
+        }
+
+        function setupEventListeners() {
+            flipBtn.addEventListener('click', flipCard);
+            knowBtn.addEventListener('click', knowCard);
+            dontKnowBtn.addEventListener('click', dontKnowCard);
+            resetBtn.addEventListener('click', resetCards);
+            speakBtn.addEventListener('click', speakCard);
+
+            deckButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    deckButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    loadDeck(button.dataset.deck);
+                });
+            });
+
+            voiceButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    voiceButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentVoice = button.dataset.voice;
+                });
+            });
+
+            let startX = 0;
+            let currentX = 0;
+            let isSwiping = false;
+
+            cardStack.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isSwiping = true;
+            });
+
+            cardStack.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.touches[0].clientX;
+                const diff = currentX - startX;
+
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0) {
+                        knowCard();
+                    } else {
+                        dontKnowCard();
+                    }
+                    isSwiping = false;
+                }
+            });
+
+            cardStack.addEventListener('touchend', () => {
+                isSwiping = false;
+            });
+
+            cardStack.addEventListener('mousedown', (e) => {
+                startX = e.clientX;
+                isSwiping = true;
+            });
+
+            cardStack.addEventListener('mousemove', (e) => {
+                if (!isSwiping) return;
+                currentX = e.clientX;
+                const diff = currentX - startX;
+
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0) {
+                        knowCard();
+                    } else {
+                        dontKnowCard();
+                    }
+                    isSwiping = false;
+                }
+            });
+
+            cardStack.addEventListener('mouseup', () => {
+                isSwiping = false;
+            });
+
+            cardStack.addEventListener('mouseleave', () => {
+                isSwiping = false;
+            });
+
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => {};
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
