@@ -46,18 +46,32 @@
             opacity: 0.9;
         }
 
-        .card-stack {
+        /* Updated Flashcard Styles */
+        .card-container {
             position: relative;
             height: 400px;
+            width: 100%;
             margin: 30px 0;
-            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .flashcard {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-face {
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background: white;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             display: flex;
@@ -65,47 +79,35 @@
             justify-content: center;
             align-items: center;
             padding: 30px;
-            transition: transform 0.5s, opacity 0.5s;
-            cursor: pointer;
-            backface-visibility: hidden;
+            transition: all 0.75s linear;
             transform-style: preserve-3d;
-        }
-
-        .flashcard.flipped .card-front {
-            transform: rotateY(180deg);
-        }
-
-        .flashcard.flipped .card-back {
-            transform: rotateY(0deg);
-        }
-
-        .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 30px;
-            backface-visibility: hidden;
-            transition: transform 0.6s;
-            border-radius: 20px;
         }
 
         .card-front {
             background: linear-gradient(135deg, #3498db, #8e44ad);
             color: white;
-            transform: rotateY(0deg);
+            opacity: 1;
+            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+
+        .flashcard.turned .card-front {
+            opacity: 0;
+            transform: rotateX(180deg) rotateY(0deg) rotateZ(0deg);
         }
 
         .card-back {
             background: linear-gradient(135deg, #2ecc71, #3498db);
             color: white;
-            transform: rotateY(180deg);
+            opacity: 0;
+            transform: rotateX(180deg) rotateY(0deg) rotateZ(0deg);
         }
 
-         .spanish {
+        .flashcard.turned .card-back {
+            opacity: 1;
+            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+        }
+
+        .spanish {
             font-size: 2.5rem;
             font-weight: bold;
             margin-bottom: 15px;
@@ -126,6 +128,15 @@
             padding: 5px 15px;
             border-radius: 20px;
             font-size: 0.9rem;
+        }
+
+        .flip-hint {
+            position: absolute;
+            bottom: 20px;
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            opacity: 0.9;
         }
 
         .controls {
@@ -307,33 +318,11 @@
                 flex-direction: column;
                 align-items: center;
             }
-        }
-
-        @media (max-width: 600px) {
-            .flashcard {
-                padding: 20px;
-            }
             
-            .spanish {
-                font-size: 2rem;
-            }
-            
-            .english {
-                font-size: 1.5rem;
-            }
-            
-            .controls {
-                gap: 20px;
-            }
-            
-            .control-btn {
-                width: 60px;
-                height: 60px;
-                font-size: 1.5rem;
+            .card-container {
+                height: 350px;
             }
         }
-
-       
     </style>
 </head>
 <body>
@@ -357,7 +346,22 @@
             <span>Known: <span id="known-count">0</span></span>
         </div>
 
-        <div class="card-stack" id="card-stack"></div>
+        <!-- Updated Flashcard Structure -->
+        <div class="card-container">
+            <div class="flashcard" id="flashcard">
+                <div class="card-face card-front">
+                    <div class="category" id="front-category">Greetings & Colors</div>
+                    <div class="spanish" id="front-spanish">Hola</div>
+                    <div class="flip-hint">Click to reveal answer</div>
+                </div>
+                <div class="card-face card-back">
+                    <div class="category" id="back-category">Greetings & Colors</div>
+                    <div class="english" id="back-english">Hello</div>
+                    <div class="spanish" id="back-spanish">Hola</div>
+                    <div class="flip-hint">Click to see question</div>
+                </div>
+            </div>
+        </div>
 
         <div class="controls">
             <button class="control-btn dont-know-btn" id="dont-know-btn" title="Don't know">
@@ -453,8 +457,14 @@
         let knownCards = 0;
         let currentVoice = 'es';
         let dontKnowCards = [];
+        let turned = false;
 
-        const cardStack = document.getElementById('card-stack');
+        const flashcard = document.getElementById('flashcard');
+        const frontSpanish = document.getElementById('front-spanish');
+        const backSpanish = document.getElementById('back-spanish');
+        const backEnglish = document.getElementById('back-english');
+        const frontCategory = document.getElementById('front-category');
+        const backCategory = document.getElementById('back-category');
         const progressBar = document.getElementById('progress-bar');
         const cardsLeftElement = document.getElementById('cards-left');
         const knownCountElement = document.getElementById('known-count');
@@ -478,63 +488,40 @@
             dontKnowCards = [];
             currentCardIndex = 0;
             knownCards = 0;
-            renderCards();
+            turned = false;
+            flashcard.classList.remove('turned');
+            updateCard();
             updateProgress();
         }
 
-        function renderCards() {
-            cardStack.innerHTML = '';
-
+        function updateCard() {
             if (cards.length === 0) {
-                cardStack.innerHTML = `
-                    <div class="flashcard">
-                        <div class="card-face card-front">
-                            <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
-                            <div class="spanish">¡Felicidades!</div>
-                            <div class="english">You've completed all cards!</div>
-                        </div>
-                    </div>
-                `;
+                frontSpanish.textContent = "¡Felicidades!";
+                backSpanish.textContent = "¡Felicidades!";
+                backEnglish.textContent = "You've completed all cards!";
+                frontCategory.textContent = currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations';
+                backCategory.textContent = currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations';
                 return;
             }
 
-            for (let i = 0; i < Math.min(3, cards.length); i++) {
-                const cardIndex = (currentCardIndex + i) % cards.length;
-                const card = cards[cardIndex];
-
-                const cardElement = document.createElement('div');
-                cardElement.className = 'flashcard';
-                cardElement.style.zIndex = 3 - i;
-                cardElement.style.transform = `translateY(${i * 5}px)`;
-
-                cardElement.innerHTML = `
-                    <div class="card-face card-front">
-                        <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
-                        <div class="spanish">${card.spanish}</div>
-                        <div class="english">Tap to flip</div>
-                    </div>
-                    <div class="card-face card-back">
-                        <div class="category">${currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations'}</div>
-                        <div class="english">${card.english}</div>
-                        <div class="spanish">${card.spanish}</div>
-                    </div>
-                `;
-
-                if (i === 0) {
-                    cardElement.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        flipCard();
-                    });
-                }
-
-                cardStack.appendChild(cardElement);
-            }
+            const card = cards[currentCardIndex];
+            frontSpanish.textContent = card.spanish;
+            backSpanish.textContent = card.spanish;
+            backEnglish.textContent = card.english;
+            frontCategory.textContent = currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations';
+            backCategory.textContent = currentDeck === 'greetings' ? 'Greetings & Colors' : 'Verb Conjugations';
+            
+            // Reset flip state when changing cards
+            turned = false;
+            flashcard.classList.remove('turned');
         }
 
         function flipCard() {
-            const currentCard = cardStack.children[0];
-            if (currentCard) {
-                currentCard.classList.toggle('flipped');
+            turned = !turned;
+            if (turned) {
+                flashcard.classList.add('turned');
+            } else {
+                flashcard.classList.remove('turned');
             }
         }
 
@@ -584,7 +571,7 @@
                 currentCardIndex = 0;
             }
 
-            renderCards();
+            updateCard();
             updateProgress();
 
             knowBtn.style.transform = 'scale(1.2)';
@@ -599,7 +586,11 @@
             const card = cards.splice(currentCardIndex, 1)[0];
             dontKnowCards.push(card);
 
-            renderCards();
+            if (currentCardIndex >= cards.length) {
+                currentCardIndex = 0;
+            }
+
+            updateCard();
             updateProgress();
 
             dontKnowBtn.style.transform = 'scale(1.2)';
@@ -608,20 +599,21 @@
             }, 200);
         }
 
-       function resetCards() {
-    // Reset to the original deck and clear all tracking
-    cards = [...flashcardDecks[currentDeck]];
-    dontKnowCards = [];
-    currentCardIndex = 0;
-    knownCards = 0;
-    renderCards();
-    updateProgress();
-    resetBtn.style.transform = 'scale(1.2)';
-    setTimeout(() => {
-        resetBtn.style.transform = 'scale(1)';
-    }, 200);
-}
-
+        function resetCards() {
+            // Reset to the original deck and clear all tracking
+            cards = [...flashcardDecks[currentDeck]];
+            dontKnowCards = [];
+            currentCardIndex = 0;
+            knownCards = 0;
+            turned = false;
+            flashcard.classList.remove('turned');
+            updateCard();
+            updateProgress();
+            resetBtn.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                resetBtn.style.transform = 'scale(1)';
+            }, 200);
+        }
 
         function updateProgress() {
             const totalCards = flashcardDecks[currentDeck].length;
@@ -639,6 +631,9 @@
             dontKnowBtn.addEventListener('click', dontKnowCard);
             resetBtn.addEventListener('click', resetCards);
             speakBtn.addEventListener('click', speakCard);
+
+            // Click on card to flip
+            flashcard.addEventListener('click', flipCard);
 
             deckButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -660,12 +655,12 @@
             let currentX = 0;
             let isSwiping = false;
 
-            cardStack.addEventListener('touchstart', (e) => {
+            flashcard.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].clientX;
                 isSwiping = true;
             });
 
-            cardStack.addEventListener('touchmove', (e) => {
+            flashcard.addEventListener('touchmove', (e) => {
                 if (!isSwiping) return;
                 currentX = e.touches[0].clientX;
                 const diff = currentX - startX;
@@ -680,16 +675,16 @@
                 }
             });
 
-            cardStack.addEventListener('touchend', () => {
+            flashcard.addEventListener('touchend', () => {
                 isSwiping = false;
             });
 
-            cardStack.addEventListener('mousedown', (e) => {
+            flashcard.addEventListener('mousedown', (e) => {
                 startX = e.clientX;
                 isSwiping = true;
             });
 
-            cardStack.addEventListener('mousemove', (e) => {
+            flashcard.addEventListener('mousemove', (e) => {
                 if (!isSwiping) return;
                 currentX = e.clientX;
                 const diff = currentX - startX;
@@ -704,11 +699,11 @@
                 }
             });
 
-            cardStack.addEventListener('mouseup', () => {
+            flashcard.addEventListener('mouseup', () => {
                 isSwiping = false;
             });
 
-            cardStack.addEventListener('mouseleave', () => {
+            flashcard.addEventListener('mouseleave', () => {
                 isSwiping = false;
             });
 
