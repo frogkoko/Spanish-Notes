@@ -41,6 +41,30 @@
             margin-bottom: 10px;
         }
 
+          .back-btn {
+            position: absolute;
+            left: 5%;
+            top: 5%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         .subtitle {
             font-size: 1.2rem;
             opacity: 0.9;
@@ -328,6 +352,9 @@
 <body>
     <div class="container">
         <header>
+             <a href="../index.html" class="back-btn">
+                <i class="fas fa-arrow-left"></i>
+            </a>
             <h1>Spanish Flashcards</h1>
             <p class="subtitle">Swipe right if you know it, left if you don't</p>
         </header>
